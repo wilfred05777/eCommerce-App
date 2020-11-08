@@ -32,7 +32,7 @@ router.get('/', (req, res) => {
 });
 
 // GET SINGLE ORDER
-router.get('/:id', (req, res)=> {
+router.get('/:id', async (req, res)=> {
     const orderId = req.params.id;
 
 
@@ -64,22 +64,92 @@ router.get('/:id', (req, res)=> {
 })
 
 // PLACE A NEW ORDER
-// https://www.youtube.com/watch?v=2fEukDAXkgY&list=PLsjmv9aDmNDAN5adZxbGTlQHlgU2je7KE&index=5  @ 9:58 mins in YouTube
-// 
-// POSTMAN EXAMPLE QUERY/POST
-//  {
-//     "userId": "2",
-//     "products":
-//     [{"id": "1", "incart":"2"},{"id": "18", "incart": "5"},{"id": "32", "incart": "3"},{"id": "18", "incart": "5"},{"id": "13", "incart": "8"}]
-// }
-
-router.post('/new', (req, res) => {
-
+router.post('/new', async (req, res) => {
+    // let userId = req.body.userId;
+    // let data = JSON.parse(req.body);
     let {userId, products} = req.body;
+    console.log(userId);
+    console.log(products);
 
-    console.log(userId, products);
+     if (userId !== null && userId > 0) {
+        database.table('orders')
+            .insert({
+                user_id: userId
+            }).then((newOrderId) => {
+
+            if (newOrderId > 0) {
+                products.forEach(async (p) => {
+
+                        let data = await database.table('products').filter({id: p.id}).withFields(['quantity']).get();
+
+
+
+                    let inCart = parseInt(p.incart);
+
+                    // Deduct the number of pieces ordered from the quantity in database
+
+                    if (data.quantity > 0) {
+                        data.quantity = data.quantity - inCart;
+
+                        if (data.quantity < 0) {
+                            data.quantity = 0;
+                        }
+
+                    } else {
+                        data.quantity = 0;
+                    }
+
+                    // Insert order details w.r.t the newly created order Id
+                    database.table('orders_details')
+                        .insert({
+                            order_id: newOrderId,
+                            product_id: p.id,
+                            quantity: inCart
+                        }).then(newId => {
+                        database.table('products')
+                            .filter({id: p.id})
+                            .update({
+                                quantity: data.quantity
+                            }).then(successNum => {
+                        }).catch(err => console.log(err));
+                    }).catch(err => console.log(err));
+                });
+
+            } else {
+                res.json({message: 'New order failed while adding order details', success: false});
+            }
+            res.json({
+                message: `Order successfully placed with order id ${newOrderId}`,
+                success: true,
+                order_id: newOrderId,
+                products: products
+            })
+        }).catch(err => res.json(err));
+    }
+
+    else {
+        res.json({message: 'New order failed', success: false});
+    }
+
 });
 
+// Payment Gateway
+router.post('/payment', (req, res) => {
+    setTimeout(() => {
+        res.status(200).json({success: true});
+    }, 3000)
+});
+
+
+/*
+https://www.youtube.com/watch?v=2fEukDAXkgY&list=PLsjmv9aDmNDAN5adZxbGTlQHlgU2je7KE&index=5  @ 9:58 mins in YouTube
+POSTMAN EXAMPLE QUERY/POST
+ {
+    "userId": "2",
+    "products":
+    [{"id": "1", "incart":"2"},{"id": "18", "incart": "5"},{"id": "32", "incart": "3"},{"id": "18", "incart": "5"},{"id": "13", "incart": "8"}]
+}
+*/
 
 
 module.exports = router;
