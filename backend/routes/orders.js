@@ -64,10 +64,11 @@ router.get('/:id', (req, res)=> {
 })
 
 // PLACE A NEW ORDER
+// https://www.youtube.com/watch?v=2fEukDAXkgY&list=PLsjmv9aDmNDAN5adZxbGTlQHlgU2je7KE&index=5  @ 9:58 mins in YouTube
 router.post('/new', (req, res) => {
 
     let {userId, products} = req.body;
-    
+
     console.log(userId, products);
 });
 
