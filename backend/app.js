@@ -21,11 +21,23 @@ app.use('/api/users', usersRoute);
 app.use('/api/orders', ordersRoute);
 // app.use('/api/orders/new', ordersRouteNew);
 
-app.use(cors({
-  origin: "*",
-  methods:['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
-  allowedHeaders: 'Content-type, Authorization, Origin, X-Requested-With, Accept'
-}));
+app.use((req,res, next)=>{
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Header", "Origin, X-Requested-With, Content-Type, Accept");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PATCH, DELETE, OPTIONS"
+    );
+    next();
+});
+
+// app.use(cors({
+//   allowedHeaders: 'Content-type, Authorization, Origin, X-Requested-With, Accept',
+//   origin: "*",
+//   methods:['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
+// }));
+
+
 
 // app.use((req, res, next) =>{
 //   res.header('Access-Control-Allow-Origin', '*');
